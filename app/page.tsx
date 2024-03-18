@@ -1,33 +1,36 @@
 "use client";
-import {
-  SignedIn,
-  SignedOut,
-  SignInButton,
-  SignOutButton,
-} from "@clerk/nextjs";
+import { useOrganization, useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api";
+import { useEffect, useState } from "react";
 
 export default function Home() {
+  const [orgId, setOrgId] = useState<string | undefined>(undefined);
+  const organization = useOrganization();
+  const user = useUser();
+  useEffect(() => {
+    if (organization.isLoaded && user.isLoaded) {
+      // if it's the personal account, use user's Id for orgId
+      setOrgId(organization.organization?.id ?? user.user?.id);
+    }
+  }, [organization, user]);
+
   const createFile = useMutation(api.files.createFile);
 
-  const allFiles = useQuery(api.files.getAllFiles);
-  console.log("allFiles", allFiles);
+  const allFiles = useQuery(api.files.getAllFiles, orgId ? { orgId } : "skip");
+
   return (
     <main>
-      <SignedIn>
-        <SignOutButton>
-          <Button>Sign out</Button>
-        </SignOutButton>
-      </SignedIn>
-      <SignedOut>
-        <SignInButton mode={"modal"}>
-          <Button>Sign in</Button>
-        </SignInButton>
-      </SignedOut>
-
-      <Button onClick={() => createFile({ name: "hello-file" })}>Click</Button>
+      <Button
+        onClick={() => {
+          if (orgId) {
+            createFile({ name: "hello-file", orgId });
+          }
+        }}
+      >
+        Create file
+      </Button>
 
       {allFiles?.map((file) => {
         return <div key={file._id}>{file.name}</div>;

@@ -1,40 +1,34 @@
 import { mutation, query } from "./_generated/server";
 import { ConvexError, v } from "convex/values";
-import { GenericMutationCtx, GenericQueryCtx } from "convex/server";
-import { DataModel } from "./_generated/dataModel";
 
 export const createFile = mutation({
-  args: { name: v.string() },
+  args: { name: v.string(), orgId: v.string() },
   async handler(ctx, args) {
-    await identity(ctx, () => {
+    const authIdentity = await ctx.auth.getUserIdentity();
+    if (!authIdentity) {
       throw new ConvexError("You must be logged in to upload tha file");
-    });
+    }
 
     await ctx.db.insert("files", {
       name: args.name,
+      orgId: args.orgId,
     });
   },
 });
 
 export const getAllFiles = query({
-  args: {},
+  args: { orgId: v.string() },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
-    console.log("identity", identity);
+
+    // return empty array if not identified
     if (!identity) {
       return [];
     } else {
-      return await ctx.db.query("files").collect();
+      return ctx.db
+        .query("files")
+        .withIndex("by_orgId", (query) => query.eq("orgId", args.orgId))
+        .collect();
     }
   },
 });
-
-const identity = async (
-  ctx: GenericMutationCtx<DataModel> | GenericQueryCtx<DataModel>,
-  callbackFn: () => void,
-) => {
-  const authIdentity = await ctx.auth.getUserIdentity();
-  if (!authIdentity) {
-    callbackFn();
-  }
-};
