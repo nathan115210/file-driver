@@ -13,7 +13,7 @@ npx convex dev
 2. run below in a new terminal
 
 ```shell
-npx run dev
+npm run dev
 ```
 
 ## Tech stacks:
