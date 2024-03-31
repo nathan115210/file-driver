@@ -138,7 +138,7 @@ const UploadButton: FC<UploadButtonProps> = ({ orgId }) => {
                 <FormField
                   control={form.control}
                   name="file"
-                  render={(field) => (
+                  render={() => (
                     <FormItem>
                       <FormLabel>File</FormLabel>
                       <FormControl>
