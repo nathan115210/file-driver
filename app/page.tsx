@@ -22,21 +22,7 @@ export default function Home() {
 
   const allFiles = useQuery(api.files.getAllFiles, orgId ? { orgId } : "skip");
 
-  if (!allFiles) {
-    return (
-      <main className={"container mx-auto pt-12 "}>
-        <div
-          className={
-            "flex flex-col gap-4 w-full items-center mt-12 text-gray-500"
-          }
-        >
-          <Loader2 className={"h-32 w-32 animate-spin"} />
-          <div className={"text-2xl"}>Loading...</div>
-        </div>
-      </main>
-    );
-  }
-  if (allFiles.length === 0) {
+  if (allFiles && allFiles.length === 0) {
     return (
       <main className={"container mx-auto pt-12 "}>
         <div className={"flex flex-col gap-4 w-full items-center mt-12"}>
@@ -62,11 +48,13 @@ export default function Home() {
         <h1 className={"text-4xl font-bold"}>Your files</h1>
         <UploadButton orgId={orgId} />
       </div>
-      <div className={"grid grid-cols-4 gap-4"}>
-        {allFiles.map((file) => {
-          return <FileCard key={file._id} file={file} />;
-        })}
-      </div>
+      {allFiles && (
+        <div className={"grid grid-cols-3 gap-4"}>
+          {allFiles.map((file) => {
+            return <FileCard key={file._id} file={file} />;
+          })}
+        </div>
+      )}
     </main>
   );
 }

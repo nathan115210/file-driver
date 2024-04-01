@@ -24,6 +24,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api";
 import { useToast } from "@/components/ui/use-toast";
+import { fileTypesMap } from "@/convex/schema";
 
 const formSchema = z.object({
   title: z
@@ -60,19 +61,26 @@ const UploadButton: FC<UploadButtonProps> = ({ orgId }) => {
   const { toast } = useToast();
 
   const fileOnSubmit = async (data: z.infer<typeof formSchema>) => {
+    const dataType = data.file[0].type;
     if (!orgId) return;
     //Get a short-lived upload URL
     const postUrl = await generateUploadUrl();
     // POST the file to the URL
     const result = await fetch(postUrl, {
       method: "POST",
-      headers: { "Content-Type": data.file[0].type },
+      headers: { "Content-Type": dataType },
       body: data.file[0],
     });
-    const { storageId: fileId } = await result.json();
+    const { storageId } = await result.json();
+
     // Save the newly allocated storage id to the database
     try {
-      await createFile({ name: data.title, fileId, orgId }).then(() => {
+      await createFile({
+        name: data.title,
+        fileId: storageId,
+        orgId,
+        type: fileTypesMap[dataType],
+      }).then(() => {
         form.reset();
         setIsFileDialogOpen(false);
         toast({
@@ -91,7 +99,7 @@ const UploadButton: FC<UploadButtonProps> = ({ orgId }) => {
       toast({
         variant: "destructive",
         title: "Uh oh! Something went wrong.",
-        description: "There was a problem with uploading file",
+        description: "There was a problem with uploading file's format",
       });
       setIsFileDialogOpen(false);
     }
